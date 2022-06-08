@@ -22,9 +22,7 @@ app.use((req, res, next) => {
   next()
 })
 
-app.use('/api/auth', (req,res, next) => {
-  res.json({ message: "C'est bien la route d'authentification!" })
-})
+app.use('/api/auth', userRoutes)
 app.use('/api/sauces', (req, res) => {
   res.json({ message: "C'est bien la route des sauces!" })
 })
