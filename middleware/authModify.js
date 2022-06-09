@@ -6,11 +6,11 @@ module.exports = (req, res, next) => {
     const decodedToken = jwt.verify(token, 'A_SUPER_SECRET_RANDOM_DECODING_KEY')
     const userId = decodedToken.userId
     if (req.body.userId && req.body.userId !== userId) {
-      throw 'Invalid user ID'
+      res.status(403).json({ message: 'Seul le propriétaire de cette sauce peut la modifier!' })
     } else {
       next()
     }
   } catch (error) {
-    res.status(401).json({ error: error | 'Unauthorized request, need authentification!' })
+    res.status(401).json({ error: error | "Unauthorized request, need authentification!" })
   }
 }

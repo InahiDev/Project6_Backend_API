@@ -22,9 +22,9 @@ app.use((req, res, next) => {
   next()
 })
 
+app.use('/images', express.static(path.join(__dirname, 'images')))
+
 app.use('/api/auth', userRoutes)
-app.use('/api/sauces', (req, res) => {
-  res.json({ message: "C'est bien la route des sauces!" })
-})
+app.use('/api/sauces', sauceRoutes)
 
 module.exports = app
