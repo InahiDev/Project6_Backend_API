@@ -1,5 +1,7 @@
 const Sauce = require('../models/Sauce')
 const fs= require('fs')
+const auth = require('../middleware/auth')
+const jwt = require('jsonwebtoken')
 
 exports.getAllSauces = (req, res, next) => {
   Sauce.find()
@@ -85,16 +87,81 @@ exports.deleteSauce = (req, res, next) => {
     .catch(error => res.status(500).json({ error }))
 }
 
+exports.likeStatus = (req, res, next) => {
+  Sauce.updateOne({ _id: req.params.id })
+    .then(sauce => {                    //la logique ne se mets pas ici mais au-dessus, lors de l'update. il faut revoir ceci
+      const userId = req.body.userId
+      switch (req.body.like) {
+        case 1:
+          sauce.likes ++
+          if (!sauce.usersLiked.find(userId)) {
+            sauce.usersLiked.push(userId)
+          }
+          if (sauce.usersDisliked.find(userId)) {
+              const userIndex = sauce.usersDisliked.indexOf(userId)
+              sauce.usersDisliked.splice(userIndex, 1)
+              sauce.dislikes --
+          }
+          
+          res.status(200).json({ message: "Like comptabilisé!"})
+          break
+        case 0:
+          if (sauce.usersLiked.find(userId)) {
+            const userIndex = sauce.usersLiked.indexOf(userId)
+            sauce.usersLiked.splice(userIndex, 1)
+            sauce.likes --
+          }
+          if (sauce.usersDisliked.find(userId)) {
+            const userIndex = sauce.usersDisliked.indexOf(userId)
+            sauce.usersDisliked.splice(userIndex, 1)
+            sauce.dislikes --
+          }
+          res.status(200).json({ message: "Like ou Dislike annulé"})
+          break
+        case -1:
+          sauce.dislike ++
+          if (!sauce.usersDisliked.find(userId)) {
+            sauce.usersDisliked.push(userId)
+          }
+            if (sauce.usersLiked.find(userId)) {
+              const userIndex = sauce.usersLiked.indexOf(userId)
+              sauce.usersLiked.splice(userIndex, 1)
+              sauce.likes --
+            }
+          res.status(200).json({ message: "Dislike comptabilisé"})
+          break
+        default :
+          res.status(400).json({ message: "J'ai bien fait toutes les instructions switch, rien ne correspondait" })
+      }
+    })
+    .catch(error => res.status(400).json({ error }))
+}
 
-exports.likeSauce = (req, res, next) => {
+
+/*exports.likeSauce = (req, res, next) => {
+  const token = req.headers.authorization.split(' ')[1]
+  const decodedToken = jwt.verify(token, 'A_SUPER_SECRET_RANDOM_DECODING_KEY')
+  const userId = decodedToken.userId
   Sauce.findOne({ _id: req.params.id })
     .then(sauce => {
       if (!sauce.usersLiked.find(userId)) {
-        sauce.likes = ++sauce.likes
+        req.body = {
+          userId: userId,
+          like: 1
+        }
+        sauce.likes = sauce.likes ++
         sauce.usersLiked.push(userId)
+        if (sauce.usersDisliked.find(userId)) {
+          const userIndex = sauce.usersDisliked.indexOf(userId)
+          sauce.usersDisliked.splice(userIndex, 1)
+        }
         res.status(200).json({ message: 'Like comptabilisé!'})
       } else {
-        sauce.likes = --sauce.likes
+        req.body = {
+          userId: userId,
+          like: 0
+        }
+        sauce.likes = sauce.likes --
         const userIndex = sauce.usersLiked.indexOf(userId)
         sauce.usersLiked.splice(userIndex, 1)
         res.status(200).json({ message: 'Like enlevé' })
@@ -104,18 +171,29 @@ exports.likeSauce = (req, res, next) => {
 }
 
 exports.dislikeSauce = (req, res, next) => {
+  const token = req.headers.authorization.split(' ')[1]
+  const decodedToken = jwt.verify(token, 'A_SUPER_SECRET_RANDOM_DECODING_KEY')
+  const userId = decodedToken.userId
   Sauce.findOne({ _id: req.params.id })
     .then(sauce => {
       if(!sauce.usersDisliked.find(userId)) {
-        sauce.dislikes = ++sauce.dislikes
+        req.body = {
+          userId: userId,
+          like: -1
+        }
+        sauce.dislikes = sauce.dislikes ++
         sauce.usersDisliked.push(userId)
+        if (sauce.usersLiked.find(userId)) {
+          const userIndex = sauce.usersLiked.indexOf(userId)
+          sauce.usersLiked.splice(userIndex, 1)
+        }
         res.status(200).json({ message: 'Dislike comptabilisé!' })
       } else {
-        sauce.dislikes = --sauce.dislikes
+        sauce.dislikes = sauce.dislikes --
         const userIndex = sauce.usersDisliked.indexOf(userId)
         sauce.usersDisliked.splice(userIndex, 1)
         res.status(200).json({ message: 'Dislike enlevé!' })
       }
     })
     .catch(error => res.status(404).json({ error }))
-}
+}*/
