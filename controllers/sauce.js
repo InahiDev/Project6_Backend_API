@@ -1,7 +1,7 @@
 const Sauce = require('../models/Sauce')
 const fs= require('fs')
-const auth = require('../middleware/auth')
-const jwt = require('jsonwebtoken')
+/*const auth = require('../middleware/auth')
+const jwt = require('jsonwebtoken')*/
 
 exports.getAllSauces = (req, res, next) => {
   Sauce.find()
@@ -88,50 +88,76 @@ exports.deleteSauce = (req, res, next) => {
 }
 
 exports.likeStatus = (req, res, next) => {
-  Sauce.updateOne({ _id: req.params.id })
-    .then(sauce => {                    //la logique ne se mets pas ici mais au-dessus, lors de l'update. il faut revoir ceci
-      const userId = req.body.userId
+  const sauceId = req.params.id
+  const userId = req.body.userId
+  Sauce.findOne({ _id: sauceId })
+    .then(sauce => {
+      let likes = sauce.likes
+      let dislikes = sauce.dislikes
       switch (req.body.like) {
         case 1:
-          sauce.likes ++
-          if (!sauce.usersLiked.find(userId)) {
+          if (!sauce.usersLiked.includes(userId)) {
             sauce.usersLiked.push(userId)
+            likes = likes + 1
           }
-          if (sauce.usersDisliked.find(userId)) {
+          if (sauce.usersDisliked.includes(userId)) {
               const userIndex = sauce.usersDisliked.indexOf(userId)
               sauce.usersDisliked.splice(userIndex, 1)
-              sauce.dislikes --
+              dislikes = dislikes - 1
           }
-          
-          res.status(200).json({ message: "Like comptabilisé!"})
+          const sauceObjectLike = {
+            likes: likes,
+            dislikes: dislikes,
+            usersLiked: sauce.usersLiked,
+            usersDisliked: sauce.usersDisliked
+          }
+          Sauce.updateOne({ _id: sauceId }, { ...sauceObjectLike, _id: sauceId })
+            .then(() => res.status(200).json({ message: "Like comptabilisé!" }))
+            .catch(error => res.status(400).json({ error }))
           break
         case 0:
-          if (sauce.usersLiked.find(userId)) {
+          if (sauce.usersLiked.includes(userId)) {
             const userIndex = sauce.usersLiked.indexOf(userId)
             sauce.usersLiked.splice(userIndex, 1)
-            sauce.likes --
+            likes = likes - 1
           }
-          if (sauce.usersDisliked.find(userId)) {
+          if (sauce.usersDisliked.includes(userId)) {
             const userIndex = sauce.usersDisliked.indexOf(userId)
             sauce.usersDisliked.splice(userIndex, 1)
-            sauce.dislikes --
+            dislikes = dislikes - 1
           }
-          res.status(200).json({ message: "Like ou Dislike annulé"})
+          const sauceObject = {
+            likes: likes,
+            dislikes: dislikes,
+            usersLiked: sauce.usersLiked,
+            usersDisliked: sauce.usersDisliked
+          }
+          Sauce.updateOne({ _id: sauceId }, { ...sauceObject, _id: sauceId })
+            .then(() => res.status(200).json({ message: "Like ou Dislike annulé!" }))
+            .catch(error => res.status(400).json({ error }))
           break
         case -1:
-          sauce.dislike ++
-          if (!sauce.usersDisliked.find(userId)) {
+          if (!sauce.usersDisliked.includes(userId)) {
             sauce.usersDisliked.push(userId)
+            dislikes = dislikes + 1
           }
-            if (sauce.usersLiked.find(userId)) {
-              const userIndex = sauce.usersLiked.indexOf(userId)
-              sauce.usersLiked.splice(userIndex, 1)
-              sauce.likes --
-            }
-          res.status(200).json({ message: "Dislike comptabilisé"})
+          if (sauce.usersLiked.includes(userId)) {
+            const userIndex = sauce.usersLiked.indexOf(userId)
+            sauce.usersLiked.splice(userIndex, 1)
+            likes = likes + 1
+          }
+          const sauceObjectDislike = {
+            likes: likes,
+            dislikes: dislikes,
+            usersLiked: sauce.usersLiked,
+            usersDisliked: sauce.usersDisliked,
+          }
+          Sauce.updateOne({ _id: sauceId }, { ...sauceObjectDislike, _id: sauceId })
+            .then(() => res.status(200).json({ message: "Dislike comptabilisé!" }))
+            .catch(error => res.status(400).json({ error }))
           break
-        default :
-          res.status(400).json({ message: "J'ai bien fait toutes les instructions switch, rien ne correspondait" })
+        default:
+          res.status(500).json({ error })
       }
     })
     .catch(error => res.status(400).json({ error }))
