@@ -1,12 +1,10 @@
 const Sauce = require('../models/Sauce')
 const fs= require('fs')
-/*const auth = require('../middleware/auth')
-const jwt = require('jsonwebtoken')*/
 
 exports.getAllSauces = (req, res, next) => {
   Sauce.find()
     .then(sauces => res.status(200).json(sauces))
-    .catch(error => res.status(400).json({ error }))
+    .catch(error => res.status(500).json({ error }))
 }
 
 exports.getOneSauce = (req,res, next) => {
@@ -36,7 +34,7 @@ exports.updateSauce = (req, res, next) => {
       ...JSON.parse(req.body.sauce),
       imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}`
     }
-    Sauce.findOne({ _id: req.params.id })
+    Sauce.findOne({ _id: req.params.id }) //Ici nécessite un point de comparaison entre l'userId requêtant et l'userId propriétaire
       .then(sauce => {
         const filename = sauce.imageUrl.split('/images/')[1]
         fs.unlink(`images/${filename}`, () => {
@@ -52,30 +50,10 @@ exports.updateSauce = (req, res, next) => {
       .then(() => res.status(200).json({ message: "Sauce modifée!" }))
       .catch(error => res.status(400).json({ error }))
   }
-  /*Sauce.findOne({ _id: req.params.id })
-    .then(sauce => {
-      const filename = sauce.imageUrl.split('/images/')[1]
-      const sauceObject = req.file ?
-      fs.unlink(`images/${filename}`, () => {
-        {
-          ...JSON.parse(req.body.sauce),
-          imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}`
-        } 
-      }) : { ...req.body }
-  })
-    .catch(error => res.status(404).json({ error }))*/
-  /*const sauceObject = req.file ?
-    {
-      ...JSON.parse(req.body.sauce),
-      imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}`
-    } : { ...req.body }
-  Sauce.updateOne({ _id: req.params.id }, { ...sauceObject, _id: req.params.id })
-    .then(() => res.status(200).json({ message: 'Sauce modifiée!' }))
-    .catch(error => res.status(400).json({ error }))*/
 }
 
 exports.deleteSauce = (req, res, next) => {
-  Sauce.findOne({ _id: req.params.id })
+  Sauce.findOne({ _id: req.params.id }) //Ici nécessite un point de comparaison entre l'userId requêtant et l'userId propriétaire
     .then(sauce => {
       const filename = sauce.imageUrl.split('/images/')[1]
       fs.unlink(`images/${filename}`, () => {
@@ -89,7 +67,7 @@ exports.deleteSauce = (req, res, next) => {
 
 exports.likeStatus = (req, res, next) => {
   const sauceId = req.params.id
-  const userId = req.body.userId
+  const userId = req.body.userId  //attention, il faut récupérer l'userId depuis le token et pas depuis la req.body
   Sauce.findOne({ _id: sauceId })
     .then(sauce => {
       let likes = sauce.likes
@@ -144,7 +122,7 @@ exports.likeStatus = (req, res, next) => {
           if (sauce.usersLiked.includes(userId)) {
             const userIndex = sauce.usersLiked.indexOf(userId)
             sauce.usersLiked.splice(userIndex, 1)
-            likes = likes + 1
+            likes = likes - 1
           }
           const sauceObjectDislike = {
             likes: likes,
@@ -157,69 +135,8 @@ exports.likeStatus = (req, res, next) => {
             .catch(error => res.status(400).json({ error }))
           break
         default:
-          res.status(500).json({ error })
-      }
-    })
-    .catch(error => res.status(400).json({ error }))
-}
-
-
-/*exports.likeSauce = (req, res, next) => {
-  const token = req.headers.authorization.split(' ')[1]
-  const decodedToken = jwt.verify(token, 'A_SUPER_SECRET_RANDOM_DECODING_KEY')
-  const userId = decodedToken.userId
-  Sauce.findOne({ _id: req.params.id })
-    .then(sauce => {
-      if (!sauce.usersLiked.find(userId)) {
-        req.body = {
-          userId: userId,
-          like: 1
-        }
-        sauce.likes = sauce.likes ++
-        sauce.usersLiked.push(userId)
-        if (sauce.usersDisliked.find(userId)) {
-          const userIndex = sauce.usersDisliked.indexOf(userId)
-          sauce.usersDisliked.splice(userIndex, 1)
-        }
-        res.status(200).json({ message: 'Like comptabilisé!'})
-      } else {
-        req.body = {
-          userId: userId,
-          like: 0
-        }
-        sauce.likes = sauce.likes --
-        const userIndex = sauce.usersLiked.indexOf(userId)
-        sauce.usersLiked.splice(userIndex, 1)
-        res.status(200).json({ message: 'Like enlevé' })
-      }
-    })
-    .catch(error => res.status(400).json({ error }))
-}
-
-exports.dislikeSauce = (req, res, next) => {
-  const token = req.headers.authorization.split(' ')[1]
-  const decodedToken = jwt.verify(token, 'A_SUPER_SECRET_RANDOM_DECODING_KEY')
-  const userId = decodedToken.userId
-  Sauce.findOne({ _id: req.params.id })
-    .then(sauce => {
-      if(!sauce.usersDisliked.find(userId)) {
-        req.body = {
-          userId: userId,
-          like: -1
-        }
-        sauce.dislikes = sauce.dislikes ++
-        sauce.usersDisliked.push(userId)
-        if (sauce.usersLiked.find(userId)) {
-          const userIndex = sauce.usersLiked.indexOf(userId)
-          sauce.usersLiked.splice(userIndex, 1)
-        }
-        res.status(200).json({ message: 'Dislike comptabilisé!' })
-      } else {
-        sauce.dislikes = sauce.dislikes --
-        const userIndex = sauce.usersDisliked.indexOf(userId)
-        sauce.usersDisliked.splice(userIndex, 1)
-        res.status(200).json({ message: 'Dislike enlevé!' })
+          res.status(400).json({ error })
       }
     })
     .catch(error => res.status(404).json({ error }))
-}*/
+}
