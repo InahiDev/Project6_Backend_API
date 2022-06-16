@@ -1,6 +1,7 @@
 const express = require('express')
 const mongoose = require('mongoose')
 const path = require('path')
+const mongoSanitize = require('express-mongo-sanitize')
 
 const sauceRoutes = require('./routes/sauce')
 const userRoutes = require('./routes/user')
