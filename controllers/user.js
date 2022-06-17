@@ -20,11 +20,13 @@ exports.login = (req, res, next) => {
   User.findOne({ email: req.body.email })
     .then(user => {
       if (!user) {
+        console.log("Il n'y a pas de user avec cet identifiant en bdd")
         return res.status(401).json({ message: "Utilisateur non inscrit!"})
       }
       bcrypt.compare(req.body.password, user.password)
         .then(valid => {
           if (!valid) {
+            console.log("Le mot de passe n'est pas correct")
             return res.status(401).json({ message: "Mot de passe eronné!" })
           }
           res.status(200).json({

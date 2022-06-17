@@ -7,7 +7,7 @@ exports.getAllSauces = (req, res, next) => {
     .catch(error => res.status(500).json({ error }))
 }
 
-exports.getOneSauce = (req,res, next) => {
+exports.getOneSauce = (req, res, next) => {
   Sauce.findOne({ _id: req.params.id })
     .then(sauce => res.status(200).json(sauce))
     .catch(error => res.status(404).json({ error }))
@@ -36,33 +36,49 @@ exports.updateSauce = (req, res, next) => {
     }
     Sauce.findOne({ _id: req.params.id }) //Ici nécessite un point de comparaison entre l'userId requêtant et l'userId propriétaire
       .then(sauce => {
-        const filename = sauce.imageUrl.split('/images/')[1]
-        fs.unlink(`images/${filename}`, () => {
-          Sauce.updateOne({ _id: req.params.id }, { ...sauceObject, _id: req.params.id })
-            .then(() => res.status(200).json({ message: "Sauce modifiée et ancienne image supprimée!" }))
-            .catch(error => res.status(400).json({ error }))
-        })
+        if (req.userId === sauce.userId) {
+          const filename = sauce.imageUrl.split('/images/')[1]
+          fs.unlink(`images/${filename}`, () => {
+            Sauce.updateOne({ _id: req.params.id }, { ...sauceObject, _id: req.params.id })
+              .then(() => res.status(200).json({ message: "Sauce modifiée et ancienne image supprimée!" }))
+              .catch(error => res.status(400).json({ error }))
+          })
+        } else {
+          res.status(403).json({ message: "Unauthorized Request! Only the sauce's owner is able to modify it!" })
+        }
       })
       .catch(error => res.status(404).json({ error }))
   } else {
     const sauceObject = { ...req.body }
-    Sauce.updateOne({ _id: req.params.id }, { ...sauceObject, _id: req.params.id })
-      .then(() => res.status(200).json({ message: "Sauce modifée!" }))
-      .catch(error => res.status(400).json({ error }))
+    Sauce.findOne({ _id: req.params.id })
+      .then(sauce => {
+        if (req.userId === sauce.userId) {
+          Sauce.updateOne({ _id: req.params.id }, { ...sauceObject, _id: req.params.id })
+            .then(() => res.status(200).json({ message: "Sauce modifée!" }))
+            .catch(error => res.status(400).json({ error }))
+        } else {
+          res.status(403).json({ message: "Unauthorized Request! Only the sauce's owner is able to modify the sauce!" })
+        }
+      })
+      .catch(error => res.status(404).json({ error }))
   }
 }
 
 exports.deleteSauce = (req, res, next) => {
   Sauce.findOne({ _id: req.params.id }) //Ici nécessite un point de comparaison entre l'userId requêtant et l'userId propriétaire
     .then(sauce => {
-      const filename = sauce.imageUrl.split('/images/')[1]
-      fs.unlink(`images/${filename}`, () => {
-        Sauce.deleteOne({ _id: req.params.id })
-          .then(() => res.status(204).json({ message: 'Sauce supprimée!' }))
-          .catch(error => res.status(400).json({ error }))
-      })
+      if (req.userId === sauce.userId) {
+        const filename = sauce.imageUrl.split('/images/')[1]
+        fs.unlink(`images/${filename}`, () => {
+          Sauce.deleteOne({ _id: req.params.id })
+            .then(() => res.status(204).json({ message: 'Sauce supprimée!' }))
+            .catch(error => res.status(400).json({ error }))
+        })
+      } else {
+        res.status(403).json({ message: "Unauthorized Request, only the sauce's owner is able to delete the sauce!" })
+      }
     })
-    .catch(error => res.status(500).json({ error }))
+    .catch(error => res.status(404).json({ error }))
 }
 
 exports.likeStatus = (req, res, next) => {
