@@ -34,30 +34,30 @@ exports.updateSauce = (req, res, next) => {
       ...JSON.parse(req.body.sauce),
       imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}`
     }
-    Sauce.findOne({ _id: req.params.id }) //Ici nécessite un point de comparaison entre l'userId requêtant et l'userId propriétaire
-      .then(sauce => {
-        if (req.userId === sauce.userId) {
-          const filename = sauce.imageUrl.split('/images/')[1]
-          fs.unlink(`images/${filename}`, () => {
-            Sauce.updateOne({ _id: req.params.id }, { ...sauceObject, _id: req.params.id })
-              .then(() => res.status(200).json({ message: "Sauce modifiée et ancienne image supprimée!" }))
-              .catch(error => res.status(400).json({ error }))
-          })
-        } else {
-          res.status(403).json({ message: "Unauthorized Request! Only the sauce's owner is able to modify it!" })
-        }
-      })
-      .catch(error => res.status(404).json({ error }))
+    Sauce.findOne({ _id: req.params.id }) 
+    .then(sauce => {
+      if (req.userId === sauce.userId) {
+        const filename = sauce.imageUrl.split('/images/')[1]
+        fs.unlink(`images/${filename}`, () => {
+          Sauce.updateOne({ _id: req.params.id }, { ...sauceObject, _id: req.params.id })
+            .then(() => res.status(200).json({ message: "Sauce modifiée et ancienne image supprimée!" }))
+            .catch(error => res.status(400).json({ error }))
+        })
+      } else {
+        res.status(403).json({ message: "Unauthorized Request! Only the sauce owner is able to modify that sauce!" })
+      }      
+    })
+    .catch(error => res.status(404).json({ error }))
   } else {
     const sauceObject = { ...req.body }
-    Sauce.findOne({ _id: req.params.id })
+    Sauce.findOne({ _id: req.params.id }) //Point de comparaison entre le userId requêtant et le user Id owner
       .then(sauce => {
         if (req.userId === sauce.userId) {
           Sauce.updateOne({ _id: req.params.id }, { ...sauceObject, _id: req.params.id })
-            .then(() => res.status(200).json({ message: "Sauce modifée!" }))
-            .catch(error => res.status(400).json({ error }))
+          .then(() => res.status(200).json({ message: "Sauce modifée!" }))
+          .catch(error => res.status(400).json({ error }))
         } else {
-          res.status(403).json({ message: "Unauthorized Request! Only the sauce's owner is able to modify the sauce!" })
+          res.status(403).json({ message: "Unauthorized Request! Only the sauce owner is able to modify that sauce!" })
         }
       })
       .catch(error => res.status(404).json({ error }))
@@ -65,7 +65,7 @@ exports.updateSauce = (req, res, next) => {
 }
 
 exports.deleteSauce = (req, res, next) => {
-  Sauce.findOne({ _id: req.params.id }) //Ici nécessite un point de comparaison entre l'userId requêtant et l'userId propriétaire
+    Sauce.findOne({ _id: req.params.id }) //Ici nécessite un point de comparaison entre l'userId requêtant et l'userId propriétaire
     .then(sauce => {
       if (req.userId === sauce.userId) {
         const filename = sauce.imageUrl.split('/images/')[1]
@@ -83,7 +83,7 @@ exports.deleteSauce = (req, res, next) => {
 
 exports.likeStatus = (req, res, next) => {
   const sauceId = req.params.id
-  const userId = req.body.userId  //attention, il faut récupérer l'userId depuis le token et pas depuis la req.body
+  const userId = req.userId  //attention, il faut récupérer l'userId depuis le token et pas depuis la req.body
   Sauce.findOne({ _id: sauceId })
     .then(sauce => {
       let likes = sauce.likes
@@ -150,8 +150,9 @@ exports.likeStatus = (req, res, next) => {
             .then(() => res.status(200).json({ message: "Dislike comptabilisé!" }))
             .catch(error => res.status(400).json({ error }))
           break
-        default:
-          res.status(400).json({ error })
+        default :
+          res.status(400).json({ message: "Bad Request" })
+          break
       }
     })
     .catch(error => res.status(404).json({ error }))
