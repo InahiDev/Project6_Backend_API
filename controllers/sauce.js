@@ -30,13 +30,13 @@ exports.createSauce = (req, res, next) => {
 
 exports.updateSauce = (req, res, next) => {
   if (req.file) {
-    const sauceObject = {
-      ...JSON.parse(req.body.sauce),
-      imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}`
-    }
     Sauce.findOne({ _id: req.params.id }) 
     .then(sauce => {
       if (req.userId === sauce.userId) {
+        const sauceObject = {
+          ...JSON.parse(req.body.sauce),
+          imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}`
+        }
         const filename = sauce.imageUrl.split('/images/')[1]
         fs.unlink(`images/${filename}`, () => {
           Sauce.updateOne({ _id: req.params.id }, { ...sauceObject, _id: req.params.id })
@@ -49,10 +49,10 @@ exports.updateSauce = (req, res, next) => {
     })
     .catch(error => res.status(404).json({ error }))
   } else {
-    const sauceObject = { ...req.body }
     Sauce.findOne({ _id: req.params.id }) //Point de comparaison entre le userId requêtant et le user Id owner
       .then(sauce => {
         if (req.userId === sauce.userId) {
+          const sauceObject = { ...req.body }
           Sauce.updateOne({ _id: req.params.id }, { ...sauceObject, _id: req.params.id })
           .then(() => res.status(200).json({ message: "Sauce modifée!" }))
           .catch(error => res.status(400).json({ error }))
@@ -65,7 +65,7 @@ exports.updateSauce = (req, res, next) => {
 }
 
 exports.deleteSauce = (req, res, next) => {
-    Sauce.findOne({ _id: req.params.id }) //Ici nécessite un point de comparaison entre l'userId requêtant et l'userId propriétaire
+  Sauce.findOne({ _id: req.params.id }) //Ici nécessite un point de comparaison entre l'userId requêtant et l'userId propriétaire
     .then(sauce => {
       if (req.userId === sauce.userId) {
         const filename = sauce.imageUrl.split('/images/')[1]

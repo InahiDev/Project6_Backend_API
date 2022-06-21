@@ -5,7 +5,6 @@ const validator = require('validator')
 const TOKEN_KEY = process.env.TOKEN_KEY
 
 exports.signup = (req, res, next) => {
-  console.log(req.body.password)
   if (validator.isEmail(req.body.email)) {
     bcrypt.hash(req.body.password, 10)
     .then(hash => {
