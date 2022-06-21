@@ -5,6 +5,11 @@ const helmet = require('helmet')
 const rateLimit= require('express-rate-limit')
 const mongoSanitize = require('express-mongo-sanitize')
 
+const dotenv = require('dotenv')
+dotenv.config()
+const MONGODB_CONNECT = process.env.MONGODB_CONNECT
+
+
 const sauceRoutes = require('./routes/sauce')
 const userRoutes = require('./routes/user')
 
@@ -17,7 +22,7 @@ const limiter = rateLimit({
   legacyHeaders: false
 })
 
-mongoose.connect('mongodb+srv://InahiDeveloper:CXWbGLKJsR3BYbZ@inahidev.nbb9z.mongodb.net/?retryWrites=true&w=majority',
+mongoose.connect(MONGODB_CONNECT,
   { useNewUrlParser: true,
   useUnifiedTopology: true })
   .then(() => console.log('Connexion à MongoDB réussie!'))
@@ -32,12 +37,11 @@ app.use((req, res, next) => {
   next()
 })
 
-app.use(helmet())
-app.use(limiter)
-app.use(mongoSanitize({
-  allowDots: true,
-  replaceWith: '_'
-}))
+//app.use(helmet())
+//app.use(limiter)
+//app.use(mongoSanitize({
+//  allowDots: true
+//}))
 
 app.use('/images', express.static(path.join(__dirname, 'images')))
 

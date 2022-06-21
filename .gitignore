@@ -1,6 +1,3 @@
 node_modules
 images
-app.js
-middleware/auth.js
-middleware/authModify.js
-controllers/user.js
+.env
