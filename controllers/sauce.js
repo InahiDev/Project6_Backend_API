@@ -17,8 +17,8 @@ exports.createSauce = (req, res, next) => {
   const sauceObject = JSON.parse(req.body.sauce)
   const sauce = new Sauce({
     ...sauceObject,
-    imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}`,
-    likes: 0,
+    imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}`, //Récupération du chemin de fichier via multer
+    likes: 0, //Initialisation des paramètres de l'objet Sauce non présent dans la requête initiale
     dislikes: 0,
     usersLiked: [],
     usersDisliked: []
@@ -29,10 +29,10 @@ exports.createSauce = (req, res, next) => {
 }
 
 exports.updateSauce = (req, res, next) => {
-  if (req.file) {
+  if (req.file) { //La requête contient une image (.file créé par la méthode single() de multer)
     Sauce.findOne({ _id: req.params.id }) 
     .then(sauce => {
-      if (req.userId === sauce.userId) {
+      if (req.userId === sauce.userId) {  //Point de comparaison entre l'userId requêtant et l'userId propriétaire
         const sauceObject = {
           ...JSON.parse(req.body.sauce),
           imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}`
@@ -49,9 +49,9 @@ exports.updateSauce = (req, res, next) => {
     })
     .catch(error => res.status(404).json({ error }))
   } else {
-    Sauce.findOne({ _id: req.params.id }) //Point de comparaison entre le userId requêtant et le user Id owner
+    Sauce.findOne({ _id: req.params.id })
       .then(sauce => {
-        if (req.userId === sauce.userId) {
+        if (req.userId === sauce.userId) {  //Point de comparaison entre l'userId requêtant et l'userId propriétaire
           const sauceObject = { ...req.body }
           Sauce.updateOne({ _id: req.params.id }, { ...sauceObject, _id: req.params.id })
           .then(() => res.status(200).json({ message: "Sauce modifée!" }))
@@ -65,9 +65,9 @@ exports.updateSauce = (req, res, next) => {
 }
 
 exports.deleteSauce = (req, res, next) => {
-  Sauce.findOne({ _id: req.params.id }) //Ici nécessite un point de comparaison entre l'userId requêtant et l'userId propriétaire
+  Sauce.findOne({ _id: req.params.id })
     .then(sauce => {
-      if (req.userId === sauce.userId) {
+      if (req.userId === sauce.userId) {  //Point de comparaison entre l'userId requêtant et l'userId propriétaire
         const filename = sauce.imageUrl.split('/images/')[1]
         fs.unlink(`images/${filename}`, () => {
           Sauce.deleteOne({ _id: req.params.id })
@@ -83,7 +83,7 @@ exports.deleteSauce = (req, res, next) => {
 
 exports.likeStatus = (req, res, next) => {
   const sauceId = req.params.id
-  const userId = req.userId  //attention, il faut récupérer l'userId depuis le token et pas depuis la req.body
+  const userId = req.userId  //récupération de l'userId depuis le token et pas depuis la req.body
   Sauce.findOne({ _id: sauceId })
     .then(sauce => {
       let likes = sauce.likes
