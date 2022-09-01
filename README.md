@@ -4,7 +4,7 @@ My tasks on this project were to build a secured API to feed the front and part 
 
 ## Building the server, the logic and the security of an API ##
 
-From the server to the controllers, everything wworks fine on its own.</br>
+From the server to the controllers, everything works fine on its own.</br>
 If some security checks were implmented directly in the front end, I choosed to totally ignore them and secured the API diredctly on the server side.</br>
 The DataBase is hosted on MongoDB Atlas.</br>
 You can create an account that will be needed to enjoy the rest of the app.</br>
