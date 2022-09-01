@@ -1,6 +1,6 @@
 # Project6_Backend_API
 
-My tasks on this project were to build a secured API to feed the front and part developped with Angular.</br>
+My tasks on this project were to build a secured API to feed the front end part developped with Angular.</br>
 
 ## Building the server, the logic and the security of an API ##
 
